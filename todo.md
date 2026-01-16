@@ -116,3 +116,8 @@
 - [x] Limitar formatação em 15 dígitos totais (incluindo código do país)
 - [x] Bloquear entrada quando atingir o limite
 - [x] Adicionar maxLength no Input
+
+## Bug: Formatação ainda não funciona corretamente
+- [x] Corrigir função formatPhoneNumber para adicionar hífen corretamente
+- [x] Garantir que limite de tamanho realmente funcione
+- [x] Testar com números de 10 e 11 dígitos

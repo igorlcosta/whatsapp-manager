@@ -168,11 +168,6 @@ export default function Home() {
     // Remove tudo exceto dígitos
     let digits = value.replace(/\D/g, '');
     
-    // Limita em 15 dígitos totais (55 + 11 dígitos)
-    if (digits.length > 13) {
-      digits = digits.slice(0, 13);
-    }
-    
     // Se estiver vazio, retorna +55
     if (digits.length === 0) {
       return '+55 ';
@@ -181,35 +176,31 @@ export default function Home() {
     // Remove o 55 se já estiver presente (para não duplicar)
     const withoutCountryCode = digits.startsWith('55') ? digits.slice(2) : digits;
     
+    // Limita em 11 dígitos (DDD + número)
+    const limitedDigits = withoutCountryCode.slice(0, 11);
+    
     // Formata: +55 (XX) XXXXX-XXXX ou +55 (XX) XXXX-XXXX
     let formatted = '+55 ';
     
-    if (withoutCountryCode.length > 0) {
+    if (limitedDigits.length > 0) {
+      // Adiciona DDD
       formatted += '(';
-      formatted += withoutCountryCode.slice(0, 2); // DDD
+      formatted += limitedDigits.slice(0, 2);
       
-      if (withoutCountryCode.length > 2) {
+      if (limitedDigits.length > 2) {
         formatted += ') ';
         
-        if (withoutCountryCode.length <= 6) {
-          // Primeiros 4 dígitos
-          formatted += withoutCountryCode.slice(2);
+        // Determina se é celular (9 dígitos) ou fixo (8 dígitos)
+        const phoneDigits = limitedDigits.slice(2);
+        
+        if (phoneDigits.length <= 4) {
+          // Ainda digitando, sem hífen
+          formatted += phoneDigits;
         } else {
-          // Formato completo com hífen
-          const isNineDigits = withoutCountryCode.length >= 10;
-          if (isNineDigits) {
-            // 9XXXX-XXXX
-            formatted += withoutCountryCode.slice(2, 7);
-            if (withoutCountryCode.length > 7) {
-              formatted += '-' + withoutCountryCode.slice(7, 11);
-            }
-          } else {
-            // XXXX-XXXX
-            formatted += withoutCountryCode.slice(2, 6);
-            if (withoutCountryCode.length > 6) {
-              formatted += '-' + withoutCountryCode.slice(6, 10);
-            }
-          }
+          // Adiciona hífen antes dos últimos 4 dígitos
+          const beforeHyphen = phoneDigits.slice(0, -4);
+          const afterHyphen = phoneDigits.slice(-4);
+          formatted += beforeHyphen + '-' + afterHyphen;
         }
       }
     }
