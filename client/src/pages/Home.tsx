@@ -326,9 +326,7 @@ export default function Home() {
                     {phoneError}
                   </p>
                 )}
-                <p className="text-xs text-muted-foreground mt-1">
-                  Formato: +55 (XX) XXXXX-XXXX ou +55 XX XXXXX-XXXX
-                </p>
+
               </div>
               <div>
                 <Label htmlFor="newDisplayName">Nome de exibição (opcional)</Label>
@@ -844,9 +842,7 @@ export default function Home() {
                   {phoneError}
                 </p>
               )}
-              <p className="text-xs text-muted-foreground mt-1">
-                Formato: +55 (DDD) XXXXX-XXXX ou +55 (DDD) XXXX-XXXX
-              </p>
+
             </div>
             <div>
               <Label htmlFor="newDisplayName">Nome de exibição (opcional)</Label>

@@ -134,3 +134,6 @@
 - [x] Exibir números formatados em todos os cards
 - [x] Adicionar testes vitest completos (16 testes passando)
 - [x] Testar formatação em tempo real no browser
+
+## Ajustes de UI
+- [x] Remover frase de formato do campo de telefone no dialog
