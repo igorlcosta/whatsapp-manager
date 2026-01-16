@@ -159,6 +159,115 @@ export default function Home() {
     );
   }
   
+  // Empty state: Nenhum número cadastrado
+  if (!numbers || numbers.length === 0) {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Phone className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-xl font-semibold tracking-tight">WhatsApp Manager</h1>
+                <p className="text-sm text-muted-foreground">Gerenciamento inteligente de números</p>
+              </div>
+            </div>
+          </div>
+        </header>
+        
+        <main className="container mx-auto px-4 py-16 max-w-2xl">
+          <div className="text-center">
+            <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
+              <Phone className="w-10 h-10 text-primary" />
+            </div>
+            <h2 className="text-3xl font-bold mb-3">Bem-vindo ao WhatsApp Manager</h2>
+            <p className="text-lg text-muted-foreground mb-8">
+              Comece adicionando seus números de WhatsApp para gerenciar o rodízio de forma inteligente.
+            </p>
+            <Button size="lg" onClick={() => setAddDialogOpen(true)}>
+              <Plus className="w-5 h-5 mr-2" />
+              Adicionar Primeiro Número
+            </Button>
+            
+            <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+              <div className="p-6 rounded-xl border border-border/40 bg-card/50">
+                <div className="w-12 h-12 rounded-lg bg-green-500/10 flex items-center justify-center mb-4">
+                  <Zap className="w-6 h-6 text-green-600 dark:text-green-400" />
+                </div>
+                <h3 className="font-semibold mb-2">Sugestão Inteligente</h3>
+                <p className="text-sm text-muted-foreground">
+                  Sistema sugere automaticamente os melhores números para usar
+                </p>
+              </div>
+              
+              <div className="p-6 rounded-xl border border-border/40 bg-card/50">
+                <div className="w-12 h-12 rounded-lg bg-yellow-500/10 flex items-center justify-center mb-4">
+                  <Clock className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+                </div>
+                <h3 className="font-semibold mb-2">Cooldown Automático</h3>
+                <p className="text-sm text-muted-foreground">
+                  Controle de 24h entre usos para evitar bloqueios do WhatsApp
+                </p>
+              </div>
+              
+              <div className="p-6 rounded-xl border border-border/40 bg-card/50">
+                <div className="w-12 h-12 rounded-lg bg-blue-500/10 flex items-center justify-center mb-4">
+                  <CheckCircle2 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <h3 className="font-semibold mb-2">Histórico Completo</h3>
+                <p className="text-sm text-muted-foreground">
+                  Rastreie todos os usos e mantenha controle total
+                </p>
+              </div>
+            </div>
+          </div>
+        </main>
+        
+        {/* Dialog: Adicionar Número */}
+        <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Adicionar novo número</DialogTitle>
+              <DialogDescription>
+                Insira as informações do número de WhatsApp
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="newPhoneNumber">Número de telefone *</Label>
+                <Input
+                  id="newPhoneNumber"
+                  value={newPhoneNumber}
+                  onChange={(e) => setNewPhoneNumber(e.target.value)}
+                  placeholder="+55 11 91234-5678"
+                />
+              </div>
+              <div>
+                <Label htmlFor="newDisplayName">Nome de exibição (opcional)</Label>
+                <Input
+                  id="newDisplayName"
+                  value={newDisplayName}
+                  onChange={(e) => setNewDisplayName(e.target.value)}
+                  placeholder="Ex: Número João"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setAddDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleAddNumber} disabled={addNumberMutation.isPending}>
+                {addNumberMutation.isPending ? "Adicionando..." : "Adicionar"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
+  
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -249,7 +358,7 @@ export default function Home() {
         </div>
         
         {/* Hero Section - Sugestão Inteligente */}
-        {suggestion && suggestion.length > 0 && (
+        {suggestion && suggestion.length > 0 ? (
           <div className="mb-12 relative">
             <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-2xl blur-3xl"></div>
             <Card className="relative border-primary/20 bg-gradient-to-br from-primary/5 to-transparent overflow-hidden">
@@ -306,6 +415,42 @@ export default function Home() {
                       </Button>
                     </div>
                   ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        ) : (
+          <div className="mb-12">
+            <Card className="border-yellow-500/20 bg-yellow-500/5">
+              <CardContent className="pt-8 pb-8">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-yellow-500/10 flex items-center justify-center flex-shrink-0">
+                    <Clock className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-2xl font-bold mb-1">Nenhum número disponível no momento</h2>
+                    <p className="text-muted-foreground mb-4">
+                      Todos os números estão em cooldown ou bloqueados. Aguarde a liberação automática.
+                    </p>
+                    {numbers && numbers.length > 0 && (() => {
+                      const nextAvailable = numbers
+                        .filter(n => n.calculatedStatus === "cooldown")
+                        .sort((a, b) => a.timeRemaining - b.timeRemaining)[0];
+                      
+                      if (nextAvailable) {
+                        return (
+                          <div className="flex items-center gap-2 text-sm">
+                            <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></div>
+                            <span className="text-muted-foreground">
+                              Próximo disponível: <span className="font-semibold text-foreground">{nextAvailable.phoneNumber}</span> em{" "}
+                              <span className="font-semibold text-foreground">{formatTimeRemaining(nextAvailable.timeRemaining)}</span>
+                            </span>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </div>
                 </div>
               </CardContent>
             </Card>

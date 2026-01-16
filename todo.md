@@ -88,3 +88,8 @@
 - [x] Refinar tipografia: número em destaque, auxiliares com menor opacidade
 - [x] Adicionar microinterações (hover, loading, transições suaves)
 - [x] Melhorar hierarquia de botões (principal destacado, secundários discretos)
+
+## Empty States
+- [x] Adicionar tela de boas-vindas quando não há números cadastrados
+- [x] Adicionar mensagem quando nenhum número está disponível
+- [x] Mostrar próximo número que ficará disponível e quando
