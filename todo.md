@@ -64,3 +64,11 @@
 - [x] Substituir confirm() nativo por AlertDialog moderno do shadcn/ui
 - [x] Criar modal de confirmação elegante para desbloquear
 - [x] Criar modal de confirmação elegante para excluir
+
+## Gerenciamento de Histórico
+- [x] Adicionar endpoint para excluir registro individual do histórico
+- [x] Adicionar endpoint para limpar todo o histórico
+- [x] Criar botão de excluir em cada linha do histórico
+- [x] Criar botão "Limpar Histórico" no topo da página
+- [x] Implementar modais de confirmação modernos
+- [x] Atualizar testes

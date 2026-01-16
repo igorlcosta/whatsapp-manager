@@ -187,6 +187,25 @@ export const appRouter = router({
         const { getUsageHistory } = await import("./db");
         return getUsageHistory(input.limit);
       }),
+    
+    // Exclui um registro individual do histórico
+    deleteHistoryEntry: publicProcedure
+      .input(z.object({
+        id: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        const { deleteHistoryEntry } = await import("./db");
+        await deleteHistoryEntry(input.id);
+        return { success: true };
+      }),
+    
+    // Limpa todo o histórico
+    clearHistory: publicProcedure
+      .mutation(async () => {
+        const { clearAllHistory } = await import("./db");
+        await clearAllHistory();
+        return { success: true };
+      }),
   }),
 });
 

@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, usageHistory } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -191,4 +191,23 @@ export async function addWhatsappNumber(phoneNumber: string, displayName?: strin
   });
   
   return result;
+}
+
+export async function deleteHistoryEntry(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+  
+  await db.delete(usageHistory).where(eq(usageHistory.id, id));
+}
+
+export async function clearAllHistory(): Promise<void> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+  
+  // Deleta todo o histórico
+  await db.delete(usageHistory);
 }
