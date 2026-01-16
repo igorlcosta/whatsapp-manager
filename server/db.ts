@@ -89,4 +89,64 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// WhatsApp Number Management Queries
+
+export async function getAllWhatsappNumbers() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const { whatsappNumbers } = await import("../drizzle/schema");
+  return db.select().from(whatsappNumbers).orderBy(whatsappNumbers.phoneNumber);
+}
+
+export async function getWhatsappNumberById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const { whatsappNumbers } = await import("../drizzle/schema");
+  const result = await db.select().from(whatsappNumbers).where(eq(whatsappNumbers.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function updateWhatsappNumber(id: number, data: Partial<{
+  status: "available" | "cooldown" | "blocked";
+  lastUsedAt: Date | null;
+  lastContactCount: number;
+  blockedUntil: Date | null;
+  isSensitive: number;
+}>) {
+  const db = await getDb();
+  if (!db) return;
+  
+  const { whatsappNumbers } = await import("../drizzle/schema");
+  await db.update(whatsappNumbers).set(data).where(eq(whatsappNumbers.id, id));
+}
+
+export async function insertUsageHistory(data: {
+  numberId: number;
+  phoneNumber: string;
+  contactCount: number;
+  notes?: string;
+  wasBlocked?: number;
+}) {
+  const db = await getDb();
+  if (!db) return;
+  
+  const { usageHistory } = await import("../drizzle/schema");
+  await db.insert(usageHistory).values({
+    numberId: data.numberId,
+    phoneNumber: data.phoneNumber,
+    contactCount: data.contactCount,
+    notes: data.notes,
+    wasBlocked: data.wasBlocked ?? 0,
+  });
+}
+
+export async function getUsageHistory(limit = 100) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const { usageHistory } = await import("../drizzle/schema");
+  const { desc } = await import("drizzle-orm");
+  return db.select().from(usageHistory).orderBy(desc(usageHistory.usedAt)).limit(limit);
+}

@@ -2,6 +2,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
+import { z } from "zod";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -17,12 +18,144 @@ export const appRouter = router({
     }),
   }),
 
-  // TODO: add feature routers here, e.g.
-  // todo: router({
-  //   list: protectedProcedure.query(({ ctx }) =>
-  //     db.getUserTodos(ctx.user.id)
-  //   ),
-  // }),
+  whatsapp: router({
+    // Lista todos os números com status calculado em tempo real
+    listNumbers: publicProcedure.query(async () => {
+      const { getAllWhatsappNumbers } = await import("./db");
+      const numbers = await getAllWhatsappNumbers();
+      const now = new Date();
+      
+      return numbers.map(num => {
+        let calculatedStatus: "available" | "cooldown" | "blocked" = "available";
+        let timeRemaining = 0;
+        
+        // Verifica se está bloqueado manualmente
+        if (num.blockedUntil && num.blockedUntil > now) {
+          calculatedStatus = "blocked";
+          timeRemaining = Math.floor((num.blockedUntil.getTime() - now.getTime()) / 1000);
+        }
+        // Verifica cooldown de 24h
+        else if (num.lastUsedAt) {
+          const cooldownEnd = new Date(num.lastUsedAt.getTime() + 24 * 60 * 60 * 1000);
+          if (cooldownEnd > now) {
+            calculatedStatus = "cooldown";
+            timeRemaining = Math.floor((cooldownEnd.getTime() - now.getTime()) / 1000);
+          }
+        }
+        
+        return {
+          ...num,
+          calculatedStatus,
+          timeRemaining,
+          isSensitive: num.isSensitive === 1,
+        };
+      });
+    }),
+    
+    // Obtém sugestão inteligente do próximo número
+    getSuggestion: publicProcedure.query(async () => {
+      const { getAllWhatsappNumbers } = await import("./db");
+      const numbers = await getAllWhatsappNumbers();
+      const now = new Date();
+      
+      const available = numbers.filter(num => {
+        if (num.blockedUntil && num.blockedUntil > now) return false;
+        if (num.lastUsedAt) {
+          const cooldownEnd = new Date(num.lastUsedAt.getTime() + 24 * 60 * 60 * 1000);
+          if (cooldownEnd > now) return false;
+        }
+        return true;
+      });
+      
+      if (available.length === 0) return null;
+      
+      // Prioriza números que nunca foram usados ou há mais tempo sem uso
+      available.sort((a, b) => {
+        if (!a.lastUsedAt && !b.lastUsedAt) return 0;
+        if (!a.lastUsedAt) return -1;
+        if (!b.lastUsedAt) return 1;
+        return a.lastUsedAt.getTime() - b.lastUsedAt.getTime();
+      });
+      
+      return available[0];
+    }),
+    
+    // Registra uso de um número
+    useNumber: publicProcedure
+      .input(z.object({
+        id: z.number(),
+        contactCount: z.number().default(45),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { getWhatsappNumberById, updateWhatsappNumber, insertUsageHistory } = await import("./db");
+        
+        const number = await getWhatsappNumberById(input.id);
+        if (!number) throw new Error("Número não encontrado");
+        
+        const now = new Date();
+        
+        // Atualiza o número
+        await updateWhatsappNumber(input.id, {
+          lastUsedAt: now,
+          lastContactCount: input.contactCount,
+          status: "cooldown",
+        });
+        
+        // Registra no histórico
+        await insertUsageHistory({
+          numberId: number.id,
+          phoneNumber: number.phoneNumber,
+          contactCount: input.contactCount,
+          notes: input.notes,
+        });
+        
+        return { success: true };
+      }),
+    
+    // Bloqueia manualmente um número
+    blockNumber: publicProcedure
+      .input(z.object({
+        id: z.number(),
+        hours: z.number().default(48),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { getWhatsappNumberById, updateWhatsappNumber, insertUsageHistory } = await import("./db");
+        
+        const number = await getWhatsappNumberById(input.id);
+        if (!number) throw new Error("Número não encontrado");
+        
+        const blockedUntil = new Date(Date.now() + input.hours * 60 * 60 * 1000);
+        
+        await updateWhatsappNumber(input.id, {
+          status: "blocked",
+          blockedUntil,
+          isSensitive: 1,
+        });
+        
+        // Registra no histórico
+        await insertUsageHistory({
+          numberId: number.id,
+          phoneNumber: number.phoneNumber,
+          contactCount: 0,
+          notes: input.notes || `Bloqueado manualmente por ${input.hours}h`,
+          wasBlocked: 1,
+        });
+        
+        return { success: true };
+      }),
+    
+    // Obtém histórico de uso
+    getHistory: publicProcedure
+      .input(z.object({
+        limit: z.number().default(100),
+      }))
+      .query(async ({ input }) => {
+        const { getUsageHistory } = await import("./db");
+        return getUsageHistory(input.limit);
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;
