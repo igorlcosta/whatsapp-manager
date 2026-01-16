@@ -166,7 +166,12 @@ export default function Home() {
   
   const formatPhoneNumber = (value: string): string => {
     // Remove tudo exceto dígitos
-    const digits = value.replace(/\D/g, '');
+    let digits = value.replace(/\D/g, '');
+    
+    // Limita em 15 dígitos totais (55 + 11 dígitos)
+    if (digits.length > 13) {
+      digits = digits.slice(0, 13);
+    }
     
     // Se estiver vazio, retorna +55
     if (digits.length === 0) {
@@ -350,6 +355,7 @@ export default function Home() {
                   value={newPhoneNumber}
                   onChange={(e) => handlePhoneChange(e.target.value)}
                   placeholder="+55 11 91234-5678"
+                  maxLength={19}
                   className={phoneError ? "border-red-500 focus-visible:ring-red-500" : ""}
                 />
                 {phoneError && (

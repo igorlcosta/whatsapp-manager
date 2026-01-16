@@ -111,3 +111,8 @@
 - [x] Iniciar automaticamente com +55
 - [x] Formatar enquanto digita: +55 (XX) XXXXX-XXXX
 - [x] Permitir apenas dígitos após o +55
+
+## Bug: Formatação permite números muito longos
+- [x] Limitar formatação em 15 dígitos totais (incluindo código do país)
+- [x] Bloquear entrada quando atingir o limite
+- [x] Adicionar maxLength no Input
