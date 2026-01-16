@@ -31,10 +31,13 @@ export default function Home() {
     refetchInterval: 30000,
   });
   
+  const utils = trpc.useUtils();
+  
   const useNumberMutation = trpc.whatsapp.useNumber.useMutation({
     onSuccess: () => {
       toast.success("Número registrado com sucesso!");
       refetch();
+      utils.whatsapp.getSuggestion.invalidate(); // Invalida sugestão
       setUseDialogOpen(false);
       setContactCount(45);
       setNotes("");
@@ -48,6 +51,7 @@ export default function Home() {
     onSuccess: () => {
       toast.success("Número bloqueado com sucesso!");
       refetch();
+      utils.whatsapp.getSuggestion.invalidate(); // Invalida sugestão
       setBlockDialogOpen(false);
       setBlockHours(48);
       setBlockNotes("");
@@ -61,6 +65,7 @@ export default function Home() {
     onSuccess: () => {
       toast.success("Número desbloqueado com sucesso!");
       refetch();
+      utils.whatsapp.getSuggestion.invalidate(); // Invalida sugestão
       setUnblockDialogOpen(false);
     },
     onError: (error) => {
@@ -72,6 +77,7 @@ export default function Home() {
     onSuccess: () => {
       toast.success("Número excluído com sucesso!");
       refetch();
+      utils.whatsapp.getSuggestion.invalidate(); // Invalida sugestão
       setDeleteDialogOpen(false);
     },
     onError: (error) => {
@@ -83,6 +89,7 @@ export default function Home() {
     onSuccess: () => {
       toast.success("Número adicionado com sucesso!");
       refetch();
+      utils.whatsapp.getSuggestion.invalidate(); // Invalida sugestão
       setAddDialogOpen(false);
       setNewPhoneNumber("");
       setNewDisplayName("");

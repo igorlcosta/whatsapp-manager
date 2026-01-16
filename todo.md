@@ -100,3 +100,8 @@
 - [x] Verificar duplicatas no backend
 - [x] Adicionar feedback visual de erro em tempo real
 - [x] Adicionar validação no backend com Zod
+
+## Bug: Sugestão não atualiza
+- [x] Adicionar invalidação automática da query getSuggestion após useNumber
+- [x] Adicionar invalidação após blockNumber e unblockNumber
+- [x] Testar atualização em tempo real
