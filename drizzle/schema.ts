@@ -35,6 +35,7 @@ export const whatsappNumbers = mysqlTable("whatsapp_numbers", {
   status: mysqlEnum("status", ["available", "cooldown", "blocked"]).default("available").notNull(),
   lastUsedAt: timestamp("last_used_at"),
   lastContactCount: int("last_contact_count").default(0),
+  totalUseCount: int("total_use_count").default(0).notNull(), // Contador de quantas vezes foi usado
   blockedUntil: timestamp("blocked_until"),
   isSensitive: int("is_sensitive").default(0).notNull(), // 0 = false, 1 = true (boolean as int)
   createdAt: timestamp("created_at").defaultNow().notNull(),

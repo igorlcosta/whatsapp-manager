@@ -1,0 +1,1 @@
+ALTER TABLE `whatsapp_numbers` ADD `total_use_count` int DEFAULT 0 NOT NULL;

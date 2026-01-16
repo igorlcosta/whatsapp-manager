@@ -112,6 +112,7 @@ export async function updateWhatsappNumber(id: number, data: Partial<{
   status: "available" | "cooldown" | "blocked";
   lastUsedAt: Date | null;
   lastContactCount: number;
+  totalUseCount: number;
   blockedUntil: Date | null;
   isSensitive: number;
 }>) {

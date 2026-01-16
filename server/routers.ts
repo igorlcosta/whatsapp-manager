@@ -4,6 +4,31 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 
+// Função auxiliar para calcular status de um número
+// Reutilizável entre listNumbers e getSuggestion
+function getNumberStatus(num: any, now: Date): { status: "available" | "cooldown" | "blocked"; timeRemaining: number } {
+  // Verifica se está bloqueado manualmente
+  if (num.blockedUntil && num.blockedUntil > now) {
+    return {
+      status: "blocked",
+      timeRemaining: Math.floor((num.blockedUntil.getTime() - now.getTime()) / 1000)
+    };
+  }
+  
+  // Verifica cooldown de 24h
+  if (num.lastUsedAt) {
+    const cooldownEnd = new Date(num.lastUsedAt.getTime() + 24 * 60 * 60 * 1000);
+    if (cooldownEnd > now) {
+      return {
+        status: "cooldown",
+        timeRemaining: Math.floor((cooldownEnd.getTime() - now.getTime()) / 1000)
+      };
+    }
+  }
+  
+  return { status: "available", timeRemaining: 0 };
+}
+
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
@@ -26,26 +51,11 @@ export const appRouter = router({
       const now = new Date();
       
       return numbers.map(num => {
-        let calculatedStatus: "available" | "cooldown" | "blocked" = "available";
-        let timeRemaining = 0;
-        
-        // Verifica se está bloqueado manualmente
-        if (num.blockedUntil && num.blockedUntil > now) {
-          calculatedStatus = "blocked";
-          timeRemaining = Math.floor((num.blockedUntil.getTime() - now.getTime()) / 1000);
-        }
-        // Verifica cooldown de 24h
-        else if (num.lastUsedAt) {
-          const cooldownEnd = new Date(num.lastUsedAt.getTime() + 24 * 60 * 60 * 1000);
-          if (cooldownEnd > now) {
-            calculatedStatus = "cooldown";
-            timeRemaining = Math.floor((cooldownEnd.getTime() - now.getTime()) / 1000);
-          }
-        }
+        const { status, timeRemaining } = getNumberStatus(num, now);
         
         return {
           ...num,
-          calculatedStatus,
+          calculatedStatus: status,
           timeRemaining,
           isSensitive: num.isSensitive === 1,
         };
@@ -58,23 +68,42 @@ export const appRouter = router({
       const numbers = await getAllWhatsappNumbers();
       const now = new Date();
       
+      // Filtra apenas números disponíveis usando função reutilizável
       const available = numbers.filter(num => {
-        if (num.blockedUntil && num.blockedUntil > now) return false;
-        if (num.lastUsedAt) {
-          const cooldownEnd = new Date(num.lastUsedAt.getTime() + 24 * 60 * 60 * 1000);
-          if (cooldownEnd > now) return false;
-        }
-        return true;
+        const { status } = getNumberStatus(num, now);
+        return status === "available";
       });
       
       if (available.length === 0) return [];
       
-      // Prioriza números que nunca foram usados ou há mais tempo sem uso
+      // Ordena com tie-breakers:
+      // 1. Nunca usado (prioridade máxima)
+      // 2. Há mais tempo sem uso (lastUsedAt mais antigo)
+      // 3. Menos usado no total (totalUseCount menor)
+      // 4. ID menor (desempate final)
       available.sort((a, b) => {
-        if (!a.lastUsedAt && !b.lastUsedAt) return 0;
+        // Critério 1: Nunca usado tem prioridade
+        if (!a.lastUsedAt && !b.lastUsedAt) {
+          // Ambos nunca usados, vai para critério 3
+          if (a.totalUseCount !== b.totalUseCount) {
+            return a.totalUseCount - b.totalUseCount;
+          }
+          return a.id - b.id; // Critério 4
+        }
         if (!a.lastUsedAt) return -1;
         if (!b.lastUsedAt) return 1;
-        return a.lastUsedAt.getTime() - b.lastUsedAt.getTime();
+        
+        // Critério 2: Há mais tempo sem uso
+        const timeDiff = a.lastUsedAt.getTime() - b.lastUsedAt.getTime();
+        if (timeDiff !== 0) return timeDiff;
+        
+        // Critério 3: Menos usado no total
+        if (a.totalUseCount !== b.totalUseCount) {
+          return a.totalUseCount - b.totalUseCount;
+        }
+        
+        // Critério 4: ID menor (desempate final)
+        return a.id - b.id;
       });
       
       // Retorna os 2 primeiros números disponíveis
@@ -100,6 +129,7 @@ export const appRouter = router({
         await updateWhatsappNumber(input.id, {
           lastUsedAt: now,
           lastContactCount: input.contactCount,
+          totalUseCount: (number.totalUseCount || 0) + 1, // Incrementa contador
           status: "cooldown",
         });
         

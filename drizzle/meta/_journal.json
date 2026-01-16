@@ -15,6 +15,13 @@
       "when": 1768523419674,
       "tag": "0001_workable_iceman",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1768528993626,
+      "tag": "0002_unknown_lady_deathstrike",
+      "breakpoints": true
     }
   ]
 }

@@ -75,3 +75,8 @@
 
 ## Ordenação de Cards
 - [x] Ordenar cards por status: disponíveis primeiro, depois em cooldown, bloqueados por último
+
+## Refatoração de Código
+- [x] Criar função getStatus reutilizável para cálculo de status
+- [x] Adicionar tie-breaker no sort da sugestão (menos usado + id)
+- [x] Adicionar campo de contagem de uso total no banco
