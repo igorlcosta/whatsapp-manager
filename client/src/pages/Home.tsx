@@ -12,6 +12,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Link } from "wouter";
 import { formatBRPhone, onlyDigits, normalizeE164BR, isValidBRPhone } from "@/lib/phoneUtils";
+import { formatRelativeTime } from "@/lib/timeUtils";
 
 function formatTimeRemaining(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
@@ -623,12 +624,20 @@ export default function Home() {
                     )}
                   </div>
                   
-                  {/* Last Used Info */}
-                  {number.lastUsedAt && (
-                    <p className="text-xs text-muted-foreground/70 mb-4">
-                      Último uso: {new Date(number.lastUsedAt).toLocaleDateString("pt-BR")}
-                    </p>
-                  )}
+                  {/* Usage Stats */}
+                  <div className="flex items-center gap-2 mb-4">
+                    {/* Badge de número de usos */}
+                    <Badge variant="secondary" className="text-xs">
+                      {number.totalUseCount === 0 ? "Nunca usado" : `Usado ${number.totalUseCount} ${number.totalUseCount === 1 ? "vez" : "vezes"}`}
+                    </Badge>
+                    
+                    {/* Tempo desde último uso */}
+                    {number.lastUsedAt && (
+                      <span className="text-xs text-muted-foreground/70">
+                        • {formatRelativeTime(number.lastUsedAt.getTime())}
+                      </span>
+                    )}
+                  </div>
                   
                   {/* Action Buttons */}
                   <div className="flex gap-2">

@@ -137,3 +137,7 @@
 
 ## Ajustes de UI
 - [x] Remover frase de formato do campo de telefone no dialog
+
+## Melhorias de Visualização
+- [x] Adicionar badge com número de usos em cada card
+- [x] Mostrar tempo desde último uso (ex: "Usado há 2 horas", "Usado há 3 dias")
