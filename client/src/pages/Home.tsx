@@ -11,6 +11,7 @@ import { AlertCircle, CheckCircle2, Clock, Phone, Sparkles, AlertTriangle, Trash
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Link } from "wouter";
+import { formatBRPhone, onlyDigits, normalizeE164BR, isValidBRPhone } from "@/lib/phoneUtils";
 
 function formatTimeRemaining(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
@@ -143,81 +144,48 @@ export default function Home() {
   };
   
   const validatePhoneNumber = (phone: string): string => {
-    if (!phone.trim()) {
-      return "Digite um número de telefone";
+    const digits = onlyDigits(phone);
+    const withoutCountry = digits.startsWith("55") ? digits.slice(2) : digits;
+    
+    if (withoutCountry.length === 0) {
+      return "Digite o número de telefone";
     }
     
-    // Verifica formato (apenas números, +, -, ( ), espaços)
-    if (!/^\+?[0-9\s\-\(\)]+$/.test(phone)) {
-      return "Use apenas números, +, -, ( ) e espaços";
+    if (withoutCountry.length < 10) {
+      return "Número incompleto (DDD + 8 ou 9 dígitos)";
     }
     
-    // Conta dígitos
-    const digits = phone.replace(/\D/g, '');
-    if (digits.length < 10) {
-      return "Número muito curto (mínimo 10 dígitos)";
+    if (withoutCountry.length > 11) {
+      return "Número muito longo (máximo DDD + 9 dígitos)";
     }
-    if (digits.length > 15) {
-      return "Número muito longo (máximo 15 dígitos)";
+    
+    if (!isValidBRPhone(phone)) {
+      return "Número inválido";
     }
     
     return "";
   };
   
-  const formatPhoneNumber = (value: string): string => {
-    // Remove tudo exceto dígitos
-    let digits = value.replace(/\D/g, '');
-    
-    // Se estiver vazio, retorna +55
-    if (digits.length === 0) {
-      return '+55 ';
-    }
-    
-    // Remove o 55 se já estiver presente (para não duplicar)
-    const withoutCountryCode = digits.startsWith('55') ? digits.slice(2) : digits;
-    
-    // Limita em 11 dígitos (DDD + número)
-    const limitedDigits = withoutCountryCode.slice(0, 11);
-    
-    // Formata: +55 (XX) XXXXX-XXXX ou +55 (XX) XXXX-XXXX
-    let formatted = '+55 ';
-    
-    if (limitedDigits.length > 0) {
-      // Adiciona DDD
-      formatted += '(';
-      formatted += limitedDigits.slice(0, 2);
-      
-      if (limitedDigits.length > 2) {
-        formatted += ') ';
-        
-        // Determina se é celular (9 dígitos) ou fixo (8 dígitos)
-        const phoneDigits = limitedDigits.slice(2);
-        
-        if (phoneDigits.length <= 4) {
-          // Ainda digitando, sem hífen
-          formatted += phoneDigits;
-        } else {
-          // Adiciona hífen antes dos últimos 4 dígitos
-          const beforeHyphen = phoneDigits.slice(0, -4);
-          const afterHyphen = phoneDigits.slice(-4);
-          formatted += beforeHyphen + '-' + afterHyphen;
-        }
-      }
-    }
-    
-    return formatted;
-  };
+  // Função removida - agora usamos formatBRPhone de phoneUtils
   
   const handlePhoneChange = (value: string) => {
-    // Se o usuário apagar tudo, mantém +55
-    if (value.length === 0 || value === '+') {
+    // Se o usuário tentar apagar o +55, mantém
+    if (value.length < 4) {
       setNewPhoneNumber('+55 ');
       setPhoneError('');
       return;
     }
     
-    // Aplica formatação
-    const formatted = formatPhoneNumber(value);
+    // Extrai apenas dígitos
+    const digits = onlyDigits(value);
+    
+    // Limita a 13 dígitos (55 + 11 do número)
+    if (digits.length > 13) {
+      return; // Não permite digitar mais
+    }
+    
+    // Aplica formatação brasileira
+    const formatted = formatBRPhone(digits);
     setNewPhoneNumber(formatted);
     
     // Valida
@@ -233,8 +201,11 @@ export default function Home() {
       return;
     }
     
+    // Normaliza para E.164 (apenas dígitos com 55)
+    const normalized = normalizeE164BR(newPhoneNumber);
+    
     addNumberMutation.mutate({
-      phoneNumber: newPhoneNumber.trim(),
+      phoneNumber: normalized, // Salva apenas dígitos: 5514982250395
       displayName: newDisplayName.trim() || undefined,
     });
   };
@@ -507,7 +478,7 @@ export default function Home() {
                       </div>
                       
                       <div className="mb-4">
-                        <p className="text-3xl font-bold tracking-tight mb-2">{num.phoneNumber}</p>
+                        <p className="text-3xl font-bold tracking-tight mb-2">{formatBRPhone(num.phoneNumber)}</p>
                         {num.lastUsedAt ? (
                           <p className="text-sm text-muted-foreground">
                             Último uso: {new Date(num.lastUsedAt).toLocaleString("pt-BR")}
@@ -557,7 +528,7 @@ export default function Home() {
                           <div className="flex items-center gap-2 text-sm">
                             <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></div>
                             <span className="text-muted-foreground">
-                              Próximo disponível: <span className="font-semibold text-foreground">{nextAvailable.phoneNumber}</span> em{" "}
+                              Próximo disponível: <span className="font-semibold text-foreground">{formatBRPhone(nextAvailable.phoneNumber)}</span> em{" "}
                               <span className="font-semibold text-foreground">{formatTimeRemaining(nextAvailable.timeRemaining)}</span>
                             </span>
                           </div>
@@ -645,7 +616,7 @@ export default function Home() {
                   
                   {/* Phone Number */}
                   <div className="mb-4">
-                    <p className="text-2xl font-bold tracking-tight mb-1">{number.phoneNumber}</p>
+                    <p className="text-2xl font-bold tracking-tight mb-1">{formatBRPhone(number.phoneNumber)}</p>
                     {number.isSensitive && (
                       <Badge variant="destructive" className="text-xs">
                         <AlertTriangle className="w-3 h-3 mr-1" />
@@ -839,7 +810,14 @@ export default function Home() {
       </AlertDialog>
       
       {/* Dialog: Adicionar Número */}
-      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+      <Dialog open={addDialogOpen} onOpenChange={(open) => {
+        setAddDialogOpen(open);
+        if (!open) {
+          setPhoneError("");
+          setNewPhoneNumber("+55 ");
+          setNewDisplayName("");
+        }
+      }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Adicionar novo número</DialogTitle>
@@ -849,13 +827,26 @@ export default function Home() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="newPhoneNumber">Número de telefone *</Label>
+              <Label htmlFor="newPhoneNumber" className={phoneError ? "text-red-600 dark:text-red-400" : ""}>
+                Número de telefone *
+              </Label>
               <Input
                 id="newPhoneNumber"
                 value={newPhoneNumber}
-                onChange={(e) => setNewPhoneNumber(e.target.value)}
-                placeholder="+55 11 91234-5678"
+                onChange={(e) => handlePhoneChange(e.target.value)}
+                placeholder="+55 (11) 91234-5678"
+                maxLength={19}
+                className={phoneError ? "border-red-500 focus-visible:ring-red-500" : ""}
               />
+              {phoneError && (
+                <p className="text-sm text-red-600 dark:text-red-400 mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {phoneError}
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground mt-1">
+                Formato: +55 (DDD) XXXXX-XXXX ou +55 (DDD) XXXX-XXXX
+              </p>
             </div>
             <div>
               <Label htmlFor="newDisplayName">Nome de exibição (opcional)</Label>
@@ -877,6 +868,7 @@ export default function Home() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
     </div>
   );
 }

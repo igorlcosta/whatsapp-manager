@@ -121,3 +121,16 @@
 - [x] Corrigir função formatPhoneNumber para adicionar hífen corretamente
 - [x] Garantir que limite de tamanho realmente funcione
 - [x] Testar com números de 10 e 11 dígitos
+
+## Formatação Premium de Telefone (Produto Premium)
+- [x] Criar arquivo phoneUtils.ts com funções utilitárias
+- [x] Implementar onlyDigits para remover caracteres não numéricos
+- [x] Implementar formatBRPhone com formatação automática enquanto digita
+- [x] Implementar normalizeE164BR para salvar no banco
+- [x] Adicionar validação de números completos (10 ou 11 dígitos)
+- [x] Limitar entrada a 13 dígitos (DDI + DDD + 9 dígitos)
+- [x] Formatar automaticamente: +55 (XX) XXXXX-XXXX ou +55 (XX) XXXX-XXXX
+- [x] Salvar apenas dígitos no banco (formato E.164)
+- [x] Exibir números formatados em todos os cards
+- [x] Adicionar testes vitest completos (16 testes passando)
+- [x] Testar formatação em tempo real no browser
