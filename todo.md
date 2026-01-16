@@ -93,3 +93,10 @@
 - [x] Adicionar tela de boas-vindas quando não há números cadastrados
 - [x] Adicionar mensagem quando nenhum número está disponível
 - [x] Mostrar próximo número que ficará disponível e quando
+
+## Validação de Número
+- [x] Adicionar validação de formato brasileiro no frontend
+- [x] Validar apenas números válidos (+ - ( ) espaços e dígitos)
+- [x] Verificar duplicatas no backend
+- [x] Adicionar feedback visual de erro em tempo real
+- [x] Adicionar validação no backend com Zod

@@ -199,11 +199,28 @@ export const appRouter = router({
     // Adiciona um novo número
     addNumber: publicProcedure
       .input(z.object({
-        phoneNumber: z.string().min(10),
+        phoneNumber: z.string()
+          .min(10, "Número muito curto")
+          .regex(/^\+?[0-9\s\-\(\)]+$/, "Formato inválido. Use apenas números, +, -, ( ) e espaços")
+          .refine(val => {
+            // Remove caracteres não numéricos para contar dígitos
+            const digits = val.replace(/\D/g, '');
+            return digits.length >= 10 && digits.length <= 15;
+          }, "Número deve ter entre 10 e 15 dígitos"),
         displayName: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
-        const { addWhatsappNumber } = await import("./db");
+        const { addWhatsappNumber, getAllWhatsappNumbers } = await import("./db");
+        
+        // Verifica duplicatas
+        const existing = await getAllWhatsappNumbers();
+        const normalized = input.phoneNumber.replace(/\D/g, '');
+        const isDuplicate = existing.some(n => n.phoneNumber.replace(/\D/g, '') === normalized);
+        
+        if (isDuplicate) {
+          throw new Error("Este número já está cadastrado");
+        }
+        
         await addWhatsappNumber(input.phoneNumber, input.displayName);
         return { success: true };
       }),

@@ -86,6 +86,7 @@ export default function Home() {
       setAddDialogOpen(false);
       setNewPhoneNumber("");
       setNewDisplayName("");
+      setPhoneError("");
     },
     onError: (error) => {
       toast.error(`Erro: ${error.message}`);
@@ -104,6 +105,7 @@ export default function Home() {
   const [blockNotes, setBlockNotes] = useState("");
   const [newPhoneNumber, setNewPhoneNumber] = useState("");
   const [newDisplayName, setNewDisplayName] = useState("");
+  const [phoneError, setPhoneError] = useState("");
   
   const handleUseNumber = () => {
     if (selectedNumber === null) return;
@@ -133,11 +135,42 @@ export default function Home() {
     deleteNumberMutation.mutate({ id: selectedNumber });
   };
   
+  const validatePhoneNumber = (phone: string): string => {
+    if (!phone.trim()) {
+      return "Digite um número de telefone";
+    }
+    
+    // Verifica formato (apenas números, +, -, ( ), espaços)
+    if (!/^\+?[0-9\s\-\(\)]+$/.test(phone)) {
+      return "Use apenas números, +, -, ( ) e espaços";
+    }
+    
+    // Conta dígitos
+    const digits = phone.replace(/\D/g, '');
+    if (digits.length < 10) {
+      return "Número muito curto (mínimo 10 dígitos)";
+    }
+    if (digits.length > 15) {
+      return "Número muito longo (máximo 15 dígitos)";
+    }
+    
+    return "";
+  };
+  
+  const handlePhoneChange = (value: string) => {
+    setNewPhoneNumber(value);
+    const error = validatePhoneNumber(value);
+    setPhoneError(error);
+  };
+  
   const handleAddNumber = () => {
-    if (!newPhoneNumber.trim()) {
-      toast.error("Digite um número de telefone");
+    const error = validatePhoneNumber(newPhoneNumber);
+    if (error) {
+      setPhoneError(error);
+      toast.error(error);
       return;
     }
+    
     addNumberMutation.mutate({
       phoneNumber: newPhoneNumber.trim(),
       displayName: newDisplayName.trim() || undefined,
@@ -226,7 +259,14 @@ export default function Home() {
         </main>
         
         {/* Dialog: Adicionar Número */}
-        <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+        <Dialog open={addDialogOpen} onOpenChange={(open) => {
+          setAddDialogOpen(open);
+          if (!open) {
+            setPhoneError("");
+            setNewPhoneNumber("");
+            setNewDisplayName("");
+          }
+        }}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Adicionar novo número</DialogTitle>
@@ -236,13 +276,25 @@ export default function Home() {
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="newPhoneNumber">Número de telefone *</Label>
+                <Label htmlFor="newPhoneNumber" className={phoneError ? "text-red-600 dark:text-red-400" : ""}>
+                  Número de telefone *
+                </Label>
                 <Input
                   id="newPhoneNumber"
                   value={newPhoneNumber}
-                  onChange={(e) => setNewPhoneNumber(e.target.value)}
+                  onChange={(e) => handlePhoneChange(e.target.value)}
                   placeholder="+55 11 91234-5678"
+                  className={phoneError ? "border-red-500 focus-visible:ring-red-500" : ""}
                 />
+                {phoneError && (
+                  <p className="text-sm text-red-600 dark:text-red-400 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {phoneError}
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">
+                  Formato: +55 (XX) XXXXX-XXXX ou +55 XX XXXXX-XXXX
+                </p>
               </div>
               <div>
                 <Label htmlFor="newDisplayName">Nome de exibição (opcional)</Label>
