@@ -163,36 +163,49 @@ export default function Home() {
         </div>
         
         {/* Suggestion Card */}
-        {suggestion && (
+        {suggestion && suggestion.length > 0 && (
           <Card className="mb-8 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/30">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-primary">
                 <Sparkles className="w-5 h-5" />
                 Sugestão Inteligente
               </CardTitle>
-              <CardDescription>Use este número agora para melhor distribuição</CardDescription>
+              <CardDescription>
+                {suggestion.length === 2 
+                  ? "Use estes 2 números agora (45 contatos cada)" 
+                  : "Use este número agora para melhor distribuição"}
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{suggestion.phoneNumber}</p>
-                  {suggestion.lastUsedAt ? (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Último uso: {new Date(suggestion.lastUsedAt).toLocaleString("pt-BR")}
-                    </p>
-                  ) : (
-                    <p className="text-sm text-muted-foreground mt-1">Nunca usado</p>
-                  )}
-                </div>
-                <Button 
-                  size="lg"
-                  onClick={() => {
-                    setSelectedNumber(suggestion.id);
-                    setUseDialogOpen(true);
-                  }}
-                >
-                  Usar Agora
-                </Button>
+              <div className="space-y-4">
+                {suggestion.map((num, index) => (
+                  <div key={num.id} className="flex items-center justify-between p-4 bg-card/50 rounded-lg border border-primary/20">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-primary border-primary">
+                          #{index + 1}
+                        </Badge>
+                        <p className="text-2xl font-bold text-foreground">{num.phoneNumber}</p>
+                      </div>
+                      {num.lastUsedAt ? (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Último uso: {new Date(num.lastUsedAt).toLocaleString("pt-BR")}
+                        </p>
+                      ) : (
+                        <p className="text-sm text-muted-foreground mt-1">Nunca usado</p>
+                      )}
+                    </div>
+                    <Button 
+                      size="lg"
+                      onClick={() => {
+                        setSelectedNumber(num.id);
+                        setUseDialogOpen(true);
+                      }}
+                    >
+                      Usar Agora
+                    </Button>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>

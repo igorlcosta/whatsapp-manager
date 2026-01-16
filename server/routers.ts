@@ -52,7 +52,7 @@ export const appRouter = router({
       });
     }),
     
-    // Obtém sugestão inteligente do próximo número
+    // Obtém sugestão inteligente dos próximos 2 números
     getSuggestion: publicProcedure.query(async () => {
       const { getAllWhatsappNumbers } = await import("./db");
       const numbers = await getAllWhatsappNumbers();
@@ -67,7 +67,7 @@ export const appRouter = router({
         return true;
       });
       
-      if (available.length === 0) return null;
+      if (available.length === 0) return [];
       
       // Prioriza números que nunca foram usados ou há mais tempo sem uso
       available.sort((a, b) => {
@@ -77,7 +77,8 @@ export const appRouter = router({
         return a.lastUsedAt.getTime() - b.lastUsedAt.getTime();
       });
       
-      return available[0];
+      // Retorna os 2 primeiros números disponíveis
+      return available.slice(0, 2);
     }),
     
     // Registra uso de um número

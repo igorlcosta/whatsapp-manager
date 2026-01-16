@@ -38,14 +38,20 @@ describe("WhatsApp Number Management", () => {
     });
   });
   
-  it("should provide intelligent suggestion", async () => {
+  it("should provide intelligent suggestion with 2 numbers", async () => {
     const suggestion = await caller.whatsapp.getSuggestion();
     
-    // Pode ser null se todos estão em cooldown
-    if (suggestion) {
-      expect(suggestion).toHaveProperty("id");
-      expect(suggestion).toHaveProperty("phoneNumber");
-      expect(suggestion.phoneNumber).toMatch(/^\+55/);
+    expect(Array.isArray(suggestion)).toBe(true);
+    
+    // Pode retornar array vazio se todos estão em cooldown
+    if (suggestion.length > 0) {
+      expect(suggestion.length).toBeLessThanOrEqual(2);
+      
+      suggestion.forEach(num => {
+        expect(num).toHaveProperty("id");
+        expect(num).toHaveProperty("phoneNumber");
+        expect(num.phoneNumber).toMatch(/^\+55/);
+      });
     }
   });
   

@@ -45,3 +45,8 @@
 - [x] Verificar responsividade
 - [x] Validar todos os 13 números
 - [x] Criar checkpoint final
+
+## Melhorias Solicitadas
+- [x] Modificar sugestão inteligente para mostrar 2 números ao invés de 1
+- [x] Atualizar frontend para exibir ambos os números sugeridos
+- [x] Atualizar testes para validar nova funcionalidade
