@@ -17,17 +17,47 @@ import { formatRelativeTime } from "@/lib/timeUtils";
 function formatTimeRemaining(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
   
   if (hours > 0) {
-    return `${hours}h ${minutes}m`;
+    return `${hours}h ${minutes}m ${secs}s`;
   }
-  return `${minutes}m`;
+  if (minutes > 0) {
+    return `${minutes}m ${secs}s`;
+  }
+  return `${secs}s`;
 }
 
 export default function Home() {
   const { data: numbers, isLoading, refetch } = trpc.whatsapp.listNumbers.useQuery(undefined, {
     refetchInterval: 30000, // Atualiza a cada 30 segundos
   });
+  
+  // Estado para forçar re-render a cada segundo (para countdown)
+  const [, setTick] = useState(0);
+  
+  // Atualiza a cada segundo para countdown em tempo real
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTick(prev => prev + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+  
+  // Função para calcular tempo restante em tempo real
+  const getRealTimeRemaining = (number: any) => {
+    if (number.calculatedStatus !== "cooldown" || !number.lastUsedAt) {
+      return number.timeRemaining;
+    }
+    
+    // Calcula quanto tempo passou desde lastUsedAt
+    const now = Date.now();
+    const lastUsed = new Date(number.lastUsedAt).getTime();
+    const cooldownEnd = lastUsed + (24 * 60 * 60 * 1000); // 24 horas em ms
+    const remaining = Math.max(0, Math.floor((cooldownEnd - now) / 1000));
+    
+    return remaining;
+  };
   
   const { data: suggestion } = trpc.whatsapp.getSuggestion.useQuery(undefined, {
     refetchInterval: 30000,
@@ -528,7 +558,7 @@ export default function Home() {
                             <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></div>
                             <span className="text-muted-foreground">
                               Próximo disponível: <span className="font-semibold text-foreground">{formatBRPhone(nextAvailable.phoneNumber)}</span> em{" "}
-                              <span className="font-semibold text-foreground">{formatTimeRemaining(nextAvailable.timeRemaining)}</span>
+                              <span className="font-semibold text-foreground">{formatTimeRemaining(getRealTimeRemaining(nextAvailable))}</span>
                             </span>
                           </div>
                         );
@@ -591,7 +621,7 @@ export default function Home() {
                       {number.calculatedStatus === "cooldown" && (
                         <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
                           <Clock className="w-3 h-3" />
-                          <span className="text-xs font-medium">{formatTimeRemaining(number.timeRemaining)}</span>
+                          <span className="text-xs font-medium">{formatTimeRemaining(getRealTimeRemaining(number))}</span>
                         </div>
                       )}
                       {number.calculatedStatus === "blocked" && (

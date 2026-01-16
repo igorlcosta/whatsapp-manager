@@ -141,3 +141,9 @@
 ## Melhorias de Visualização
 - [x] Adicionar badge com número de usos em cada card
 - [x] Mostrar tempo desde último uso (ex: "Usado há 2 horas", "Usado há 3 dias")
+
+## Contagem Regressiva em Tempo Real
+- [x] Adicionar contagem com segundos nos cards de cooldown (22h 32m 15s)
+- [x] Atualizar a cada segundo de forma segura e otimizada
+- [x] Calcular tempo restante em tempo real baseado em lastUsedAt
+- [x] Aplicar formato com segundos: XXh XXm XXs
