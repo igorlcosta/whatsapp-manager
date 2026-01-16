@@ -291,7 +291,19 @@ export default function Home() {
         
         {/* Numbers Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {numbers?.map((number) => (
+          {numbers?.sort((a, b) => {
+            // Ordem de prioridade: available (0) > cooldown (1) > blocked (2)
+            const statusOrder = { available: 0, cooldown: 1, blocked: 2 };
+            const orderA = statusOrder[a.calculatedStatus] ?? 3;
+            const orderB = statusOrder[b.calculatedStatus] ?? 3;
+            
+            if (orderA !== orderB) {
+              return orderA - orderB;
+            }
+            
+            // Se tiverem o mesmo status, ordena por tempo restante (menor primeiro)
+            return a.timeRemaining - b.timeRemaining;
+          }).map((number) => (
             <Card 
               key={number.id} 
               className={`bg-card border-border transition-all hover:shadow-lg ${

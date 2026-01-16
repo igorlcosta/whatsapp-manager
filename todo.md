@@ -72,3 +72,6 @@
 - [x] Criar botão "Limpar Histórico" no topo da página
 - [x] Implementar modais de confirmação modernos
 - [x] Atualizar testes
+
+## Ordenação de Cards
+- [x] Ordenar cards por status: disponíveis primeiro, depois em cooldown, bloqueados por último
