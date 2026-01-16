@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -93,6 +94,8 @@ export default function Home() {
   const [useDialogOpen, setUseDialogOpen] = useState(false);
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [unblockDialogOpen, setUnblockDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contactCount, setContactCount] = useState(45);
   const [notes, setNotes] = useState("");
   const [blockHours, setBlockHours] = useState(48);
@@ -121,14 +124,26 @@ export default function Home() {
   };
   
   const handleUnblock = (id: number) => {
-    if (confirm("Deseja realmente desbloquear este número?")) {
-      unblockNumberMutation.mutate({ id });
+    setSelectedNumber(id);
+    setUnblockDialogOpen(true);
+  };
+  
+  const confirmUnblock = () => {
+    if (selectedNumber) {
+      unblockNumberMutation.mutate({ id: selectedNumber });
+      setUnblockDialogOpen(false);
     }
   };
   
   const handleDelete = (id: number) => {
-    if (confirm("Deseja realmente excluir este número? Esta ação não pode ser desfeita.")) {
-      deleteNumberMutation.mutate({ id });
+    setSelectedNumber(id);
+    setDeleteDialogOpen(true);
+  };
+  
+  const confirmDelete = () => {
+    if (selectedNumber) {
+      deleteNumberMutation.mutate({ id: selectedNumber });
+      setDeleteDialogOpen(false);
     }
   };
   
@@ -541,6 +556,58 @@ export default function Home() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* Unblock Confirmation Dialog */}
+      <AlertDialog open={unblockDialogOpen} onOpenChange={setUnblockDialogOpen}>
+        <AlertDialogContent className="bg-card text-card-foreground border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-green-500" />
+              Desbloquear Número
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              Deseja realmente desbloquear este número? Ele ficará disponível imediatamente para uso.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-secondary text-secondary-foreground hover:bg-secondary/80">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmUnblock}
+              className="bg-green-600 text-white hover:bg-green-700"
+            >
+              Desbloquear
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent className="bg-card text-card-foreground border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-red-500" />
+              Excluir Número
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              Deseja realmente excluir este número? Esta ação não pode ser desfeita. O histórico de uso será preservado.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-secondary text-secondary-foreground hover:bg-secondary/80">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

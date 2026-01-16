@@ -59,3 +59,8 @@
 - [x] Criar interface com botão "Excluir" em cada número
 - [x] Criar formulário para adicionar novo número
 - [x] Atualizar testes
+
+## Melhorias de UI
+- [x] Substituir confirm() nativo por AlertDialog moderno do shadcn/ui
+- [x] Criar modal de confirmação elegante para desbloquear
+- [x] Criar modal de confirmação elegante para excluir

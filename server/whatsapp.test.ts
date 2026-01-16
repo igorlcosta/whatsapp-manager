@@ -94,8 +94,11 @@ describe("WhatsApp Number Management", () => {
       const updatedNumbers = await caller.whatsapp.listNumbers();
       const blockedNumber = updatedNumbers.find(n => n.id === testNumber.id);
       
-      expect(blockedNumber?.calculatedStatus).toBe("blocked");
-      expect(blockedNumber?.isSensitive).toBe(true);
+      expect(blockedNumber).toBeDefined();
+      if (blockedNumber) {
+        expect(blockedNumber.calculatedStatus).toBe("blocked");
+        expect(blockedNumber.isSensitive).toBe(true);
+      }
     }
   });
   
