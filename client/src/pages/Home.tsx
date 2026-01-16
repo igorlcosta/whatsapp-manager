@@ -7,7 +7,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertCircle, CheckCircle2, Clock, Phone, Sparkles, AlertTriangle, Trash2, Plus } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock, Phone, Sparkles, AlertTriangle, Trash2, Plus, Ban, Unlock, ArrowRight, Zap } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Link } from "wouter";
@@ -61,6 +61,7 @@ export default function Home() {
     onSuccess: () => {
       toast.success("Número desbloqueado com sucesso!");
       refetch();
+      setUnblockDialogOpen(false);
     },
     onError: (error) => {
       toast.error(`Erro: ${error.message}`);
@@ -71,6 +72,7 @@ export default function Home() {
     onSuccess: () => {
       toast.success("Número excluído com sucesso!");
       refetch();
+      setDeleteDialogOpen(false);
     },
     onError: (error) => {
       toast.error(`Erro: ${error.message}`);
@@ -90,12 +92,12 @@ export default function Home() {
     },
   });
   
-  const [selectedNumber, setSelectedNumber] = useState<number | null>(null);
   const [useDialogOpen, setUseDialogOpen] = useState(false);
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [unblockDialogOpen, setUnblockDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [selectedNumber, setSelectedNumber] = useState<number | null>(null);
   const [contactCount, setContactCount] = useState(45);
   const [notes, setNotes] = useState("");
   const [blockHours, setBlockHours] = useState(48);
@@ -104,56 +106,42 @@ export default function Home() {
   const [newDisplayName, setNewDisplayName] = useState("");
   
   const handleUseNumber = () => {
-    if (selectedNumber) {
-      useNumberMutation.mutate({
-        id: selectedNumber,
-        contactCount,
-        notes: notes || undefined,
-      });
-    }
+    if (selectedNumber === null) return;
+    useNumberMutation.mutate({
+      id: selectedNumber,
+      contactCount,
+      notes: notes || undefined,
+    });
   };
   
   const handleBlockNumber = () => {
-    if (selectedNumber) {
-      blockNumberMutation.mutate({
-        id: selectedNumber,
-        hours: blockHours,
-        notes: blockNotes || undefined,
-      });
-    }
+    if (selectedNumber === null) return;
+    blockNumberMutation.mutate({
+      id: selectedNumber,
+      hours: blockHours,
+      notes: blockNotes || undefined,
+    });
   };
   
-  const handleUnblock = (id: number) => {
-    setSelectedNumber(id);
-    setUnblockDialogOpen(true);
+  const handleUnblockNumber = () => {
+    if (selectedNumber === null) return;
+    unblockNumberMutation.mutate({ id: selectedNumber });
   };
   
-  const confirmUnblock = () => {
-    if (selectedNumber) {
-      unblockNumberMutation.mutate({ id: selectedNumber });
-      setUnblockDialogOpen(false);
-    }
-  };
-  
-  const handleDelete = (id: number) => {
-    setSelectedNumber(id);
-    setDeleteDialogOpen(true);
-  };
-  
-  const confirmDelete = () => {
-    if (selectedNumber) {
-      deleteNumberMutation.mutate({ id: selectedNumber });
-      setDeleteDialogOpen(false);
-    }
+  const handleDeleteNumber = () => {
+    if (selectedNumber === null) return;
+    deleteNumberMutation.mutate({ id: selectedNumber });
   };
   
   const handleAddNumber = () => {
-    if (newPhoneNumber.trim()) {
-      addNumberMutation.mutate({
-        phoneNumber: newPhoneNumber.trim(),
-        displayName: newDisplayName.trim() || undefined,
-      });
+    if (!newPhoneNumber.trim()) {
+      toast.error("Digite um número de telefone");
+      return;
     }
+    addNumberMutation.mutate({
+      phoneNumber: newPhoneNumber.trim(),
+      displayName: newDisplayName.trim() || undefined,
+    });
   };
   
   const availableCount = numbers?.filter(n => n.calculatedStatus === "available").length || 0;
@@ -164,8 +152,8 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <Clock className="w-12 h-12 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">Carregando números...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando...</p>
         </div>
       </div>
     );
@@ -174,283 +162,322 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container py-6">
-          <div className="flex items-center justify-between">
+      <header className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Phone className="w-5 h-5 text-primary" />
+            </div>
             <div>
-              <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-                <Phone className="w-8 h-8 text-primary" />
-                WhatsApp Manager
-              </h1>
-              <p className="text-muted-foreground mt-1">Gerenciamento inteligente de números</p>
+              <h1 className="text-xl font-semibold tracking-tight">WhatsApp Manager</h1>
+              <p className="text-sm text-muted-foreground">Gerenciamento inteligente de números</p>
             </div>
-            <div className="flex gap-2">
-              <Button variant="default" onClick={() => setAddDialogOpen(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Adicionar Número
-              </Button>
-              <Link href="/history">
-                <Button variant="outline">
-                  <Clock className="w-4 h-4 mr-2" />
-                  Histórico
-                </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/historico">
+                <Clock className="w-4 h-4 mr-2" />
+                Histórico
               </Link>
-            </div>
+            </Button>
+            <Button size="sm" onClick={() => setAddDialogOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Adicionar Número
+            </Button>
           </div>
         </div>
       </header>
       
-      <main className="container py-8">
+      <main className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card className="bg-card border-border">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total de Números</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-foreground">{numbers?.length || 0}</div>
+          <Card className="border-border/40">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Total</p>
+                  <p className="text-3xl font-bold mt-1">{numbers?.length || 0}</p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center">
+                  <Phone className="w-6 h-6 text-muted-foreground" />
+                </div>
+              </div>
             </CardContent>
           </Card>
           
-          <Card className="bg-card border-border">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Disponíveis</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-green-500">{availableCount}</div>
+          <Card className="border-green-500/20 bg-green-500/5">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-green-600 dark:text-green-400">Disponíveis</p>
+                  <p className="text-3xl font-bold mt-1 text-green-600 dark:text-green-400">{availableCount}</p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center">
+                  <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-400" />
+                </div>
+              </div>
             </CardContent>
           </Card>
           
-          <Card className="bg-card border-border">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Em Cooldown</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-yellow-500">{cooldownCount}</div>
+          <Card className="border-yellow-500/20 bg-yellow-500/5">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-yellow-600 dark:text-yellow-400">Em Cooldown</p>
+                  <p className="text-3xl font-bold mt-1 text-yellow-600 dark:text-yellow-400">{cooldownCount}</p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-yellow-500/10 flex items-center justify-center">
+                  <Clock className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+                </div>
+              </div>
             </CardContent>
           </Card>
           
-          <Card className="bg-card border-border">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Bloqueados</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-red-500">{blockedCount}</div>
+          <Card className="border-red-500/20 bg-red-500/5">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-red-600 dark:text-red-400">Bloqueados</p>
+                  <p className="text-3xl font-bold mt-1 text-red-600 dark:text-red-400">{blockedCount}</p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center">
+                  <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
         
-        {/* Suggestion Card */}
+        {/* Hero Section - Sugestão Inteligente */}
         {suggestion && suggestion.length > 0 && (
-          <Card className="mb-8 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/30">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-primary">
-                <Sparkles className="w-5 h-5" />
-                Sugestão Inteligente
-              </CardTitle>
-              <CardDescription>
-                {suggestion.length === 2 
-                  ? "Use estes 2 números agora (45 contatos cada)" 
-                  : "Use este número agora para melhor distribuição"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {suggestion.map((num, index) => (
-                  <div key={num.id} className="flex items-center justify-between p-4 bg-card/50 rounded-lg border border-primary/20">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-primary border-primary">
+          <div className="mb-12 relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-2xl blur-3xl"></div>
+            <Card className="relative border-primary/20 bg-gradient-to-br from-primary/5 to-transparent overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
+              <CardContent className="pt-8 pb-8 relative">
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Zap className="w-6 h-6 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-2xl font-bold mb-1">Pronto para adicionar contatos?</h2>
+                    <p className="text-muted-foreground">Use estes 2 números agora • 45 contatos cada</p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {suggestion.map((num, index) => (
+                    <div 
+                      key={num.id} 
+                      className="group relative p-6 rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm hover:border-primary/40 hover:bg-card/80 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5"
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <Badge variant="outline" className="text-primary border-primary/40 bg-primary/5">
                           #{index + 1}
                         </Badge>
-                        <p className="text-2xl font-bold text-foreground">{num.phoneNumber}</p>
+                        {!num.lastUsedAt && (
+                          <Badge variant="outline" className="text-green-600 border-green-500/40 bg-green-500/10">
+                            Nunca usado
+                          </Badge>
+                        )}
                       </div>
-                      {num.lastUsedAt ? (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Último uso: {new Date(num.lastUsedAt).toLocaleString("pt-BR")}
-                        </p>
-                      ) : (
-                        <p className="text-sm text-muted-foreground mt-1">Nunca usado</p>
-                      )}
+                      
+                      <div className="mb-4">
+                        <p className="text-3xl font-bold tracking-tight mb-2">{num.phoneNumber}</p>
+                        {num.lastUsedAt ? (
+                          <p className="text-sm text-muted-foreground">
+                            Último uso: {new Date(num.lastUsedAt).toLocaleString("pt-BR")}
+                          </p>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">Pronto para primeiro uso</p>
+                        )}
+                      </div>
+                      
+                      <Button 
+                        className="w-full group-hover:shadow-lg group-hover:shadow-primary/20 transition-all"
+                        size="lg"
+                        onClick={() => {
+                          setSelectedNumber(num.id);
+                          setUseDialogOpen(true);
+                        }}
+                      >
+                        Usar Agora
+                        <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                      </Button>
                     </div>
-                    <Button 
-                      size="lg"
-                      onClick={() => {
-                        setSelectedNumber(num.id);
-                        setUseDialogOpen(true);
-                      }}
-                    >
-                      Usar Agora
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         )}
         
         {/* Numbers Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {numbers?.sort((a, b) => {
-            // Ordem de prioridade: available (0) > cooldown (1) > blocked (2)
-            const statusOrder = { available: 0, cooldown: 1, blocked: 2 };
-            const orderA = statusOrder[a.calculatedStatus] ?? 3;
-            const orderB = statusOrder[b.calculatedStatus] ?? 3;
-            
-            if (orderA !== orderB) {
-              return orderA - orderB;
-            }
-            
-            // Se tiverem o mesmo status, ordena por tempo restante (menor primeiro)
-            return a.timeRemaining - b.timeRemaining;
-          }).map((number) => (
-            <Card 
-              key={number.id} 
-              className={`bg-card border-border transition-all hover:shadow-lg ${
-                number.calculatedStatus === "available" 
-                  ? "border-l-4 border-l-green-500" 
-                  : number.calculatedStatus === "cooldown"
-                  ? "border-l-4 border-l-yellow-500"
-                  : "border-l-4 border-l-red-500"
-              }`}
-            >
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg text-foreground flex items-center gap-2">
-                      <Phone className="w-4 h-4" />
-                      {number.phoneNumber}
-                    </CardTitle>
+        <div>
+          <h2 className="text-lg font-semibold mb-4 text-muted-foreground">Todos os números</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {numbers?.sort((a, b) => {
+              // Ordem de prioridade: available (0) > cooldown (1) > blocked (2)
+              const statusOrder: Record<string, number> = { available: 0, cooldown: 1, blocked: 2 };
+              const orderA = statusOrder[a.calculatedStatus] ?? 3;
+              const orderB = statusOrder[b.calculatedStatus] ?? 3;
+              
+              if (orderA !== orderB) {
+                return orderA - orderB;
+              }
+              
+              // Se tiverem o mesmo status, ordena por tempo restante (menor primeiro)
+              return a.timeRemaining - b.timeRemaining;
+            }).map((number) => (
+              <Card 
+                key={number.id} 
+                className={`group relative overflow-hidden transition-all duration-300 hover:shadow-lg ${
+                  number.calculatedStatus === "available" 
+                    ? "border-green-500/20 hover:border-green-500/40 hover:shadow-green-500/10" 
+                    : number.calculatedStatus === "cooldown"
+                    ? "border-yellow-500/20 hover:border-yellow-500/40 hover:shadow-yellow-500/10"
+                    : "border-red-500/20 hover:border-red-500/40 hover:shadow-red-500/10"
+                }`}
+              >
+                {/* Glow effect */}
+                <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
+                  number.calculatedStatus === "available" 
+                    ? "bg-gradient-to-br from-green-500/5 to-transparent" 
+                    : number.calculatedStatus === "cooldown"
+                    ? "bg-gradient-to-br from-yellow-500/5 to-transparent"
+                    : "bg-gradient-to-br from-red-500/5 to-transparent"
+                }`}></div>
+                
+                <CardContent className="pt-6 relative">
+                  {/* Status Badge */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      {number.calculatedStatus === "available" && (
+                        <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                          <span className="text-xs font-medium">Disponível</span>
+                        </div>
+                      )}
+                      {number.calculatedStatus === "cooldown" && (
+                        <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+                          <Clock className="w-3 h-3" />
+                          <span className="text-xs font-medium">{formatTimeRemaining(number.timeRemaining)}</span>
+                        </div>
+                      )}
+                      {number.calculatedStatus === "blocked" && (
+                        <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
+                          <AlertCircle className="w-3 h-3" />
+                          <span className="text-xs font-medium">Bloqueado</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <button
+                      onClick={() => {
+                        setSelectedNumber(number.id);
+                        setDeleteDialogOpen(true);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                  
+                  {/* Phone Number */}
+                  <div className="mb-4">
+                    <p className="text-2xl font-bold tracking-tight mb-1">{number.phoneNumber}</p>
                     {number.isSensitive && (
-                      <Badge variant="destructive" className="mt-2">
+                      <Badge variant="destructive" className="text-xs">
                         <AlertTriangle className="w-3 h-3 mr-1" />
                         Sensível
                       </Badge>
                     )}
                   </div>
-                  {number.calculatedStatus === "available" && (
-                    <CheckCircle2 className="w-5 h-5 text-green-500" />
-                  )}
-                  {number.calculatedStatus === "cooldown" && (
-                    <Clock className="w-5 h-5 text-yellow-500" />
-                  )}
-                  {number.calculatedStatus === "blocked" && (
-                    <AlertCircle className="w-5 h-5 text-red-500" />
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div>
-                    <Badge 
-                      variant={
-                        number.calculatedStatus === "available" 
-                          ? "default" 
-                          : number.calculatedStatus === "cooldown"
-                          ? "secondary"
-                          : "destructive"
-                      }
-                      className="mb-2"
-                    >
-                      {number.calculatedStatus === "available" && "Disponível"}
-                      {number.calculatedStatus === "cooldown" && "Em Espera"}
-                      {number.calculatedStatus === "blocked" && "Bloqueado"}
-                    </Badge>
-                    
-                    {number.timeRemaining > 0 && (
-                      <p className="text-sm text-muted-foreground">
-                        Libera em: <span className="font-semibold text-foreground">{formatTimeRemaining(number.timeRemaining)}</span>
-                      </p>
-                    )}
-                  </div>
                   
+                  {/* Last Used Info */}
                   {number.lastUsedAt && (
-                    <div className="text-xs text-muted-foreground">
-                      <p>Último uso: {new Date(number.lastUsedAt).toLocaleString("pt-BR")}</p>
-                      <p>Contatos: {number.lastContactCount}</p>
-                    </div>
+                    <p className="text-xs text-muted-foreground/70 mb-4">
+                      Último uso: {new Date(number.lastUsedAt).toLocaleDateString("pt-BR")}
+                    </p>
                   )}
                   
-                  <div className="flex gap-2 pt-2">
+                  {/* Action Buttons */}
+                  <div className="flex gap-2">
                     {number.calculatedStatus === "available" && (
                       <Button 
-                        size="sm" 
-                        variant="default"
                         className="flex-1"
                         onClick={() => {
                           setSelectedNumber(number.id);
                           setUseDialogOpen(true);
                         }}
                       >
-                        Usar
+                        Usar Agora
                       </Button>
                     )}
                     
-                    {number.calculatedStatus === "blocked" ? (
-                      <>
-                        <Button 
-                          size="sm"
-                          variant="outline"
-                          className="flex-1"
-                          onClick={() => handleUnblock(number.id)}
-                        >
-                          Desbloquear
-                        </Button>
-                        <Button 
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleDelete(number.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <Button 
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => {
-                            setSelectedNumber(number.id);
-                            setBlockDialogOpen(true);
-                          }}
-                        >
-                          Bloquear
-                        </Button>
-                        <Button 
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleDelete(number.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </>
+                    {number.calculatedStatus === "cooldown" && (
+                      <Button 
+                        className="flex-1"
+                        variant="secondary"
+                        disabled
+                      >
+                        <Clock className="w-4 h-4 mr-2" />
+                        Em espera
+                      </Button>
+                    )}
+                    
+                    {number.calculatedStatus === "blocked" && (
+                      <Button 
+                        className="flex-1"
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedNumber(number.id);
+                          setUnblockDialogOpen(true);
+                        }}
+                      >
+                        <Unlock className="w-4 h-4 mr-2" />
+                        Desbloquear
+                      </Button>
+                    )}
+                    
+                    {number.calculatedStatus === "available" && (
+                      <Button 
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setSelectedNumber(number.id);
+                          setBlockDialogOpen(true);
+                        }}
+                      >
+                        <Ban className="w-4 h-4" />
+                      </Button>
                     )}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </main>
       
-      {/* Use Number Dialog */}
+      {/* Dialog: Usar Número */}
       <Dialog open={useDialogOpen} onOpenChange={setUseDialogOpen}>
-        <DialogContent className="bg-card text-card-foreground">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>Registrar Uso do Número</DialogTitle>
+            <DialogTitle>Registrar uso do número</DialogTitle>
             <DialogDescription>
-              Informe quantos contatos foram adicionados e observações opcionais.
+              Informe quantos contatos foram adicionados
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4">
             <div>
-              <Label htmlFor="contactCount">Quantidade de Contatos</Label>
+              <Label htmlFor="contactCount">Quantidade de contatos</Label>
               <Input
                 id="contactCount"
                 type="number"
                 value={contactCount}
-                onChange={(e) => setContactCount(Number(e.target.value))}
-                className="mt-2"
+                onChange={(e) => setContactCount(parseInt(e.target.value) || 0)}
+                placeholder="45"
               />
             </div>
             <div>
@@ -459,8 +486,7 @@ export default function Home() {
                 id="notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Ex: Adicionados ao meio-dia"
-                className="mt-2"
+                placeholder="Ex: Adicionado ao meio-dia"
               />
             </div>
           </div>
@@ -475,34 +501,33 @@ export default function Home() {
         </DialogContent>
       </Dialog>
       
-      {/* Block Number Dialog */}
+      {/* Dialog: Bloquear Número */}
       <Dialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
-        <DialogContent className="bg-card text-card-foreground">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>Bloquear Número Manualmente</DialogTitle>
+            <DialogTitle>Bloquear número</DialogTitle>
             <DialogDescription>
-              Use quando receber aviso do WhatsApp ou precisar pausar o número.
+              Marque este número como sensível e defina o tempo de bloqueio
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4">
             <div>
-              <Label htmlFor="blockHours">Tempo de Bloqueio (horas)</Label>
+              <Label htmlFor="blockHours">Tempo de bloqueio (horas)</Label>
               <Input
                 id="blockHours"
                 type="number"
                 value={blockHours}
-                onChange={(e) => setBlockHours(Number(e.target.value))}
-                className="mt-2"
+                onChange={(e) => setBlockHours(parseInt(e.target.value) || 0)}
+                placeholder="48"
               />
             </div>
             <div>
-              <Label htmlFor="blockNotes">Motivo do Bloqueio</Label>
+              <Label htmlFor="blockNotes">Motivo (opcional)</Label>
               <Textarea
                 id="blockNotes"
                 value={blockNotes}
                 onChange={(e) => setBlockNotes(e.target.value)}
                 placeholder="Ex: Recebeu aviso do WhatsApp"
-                className="mt-2"
               />
             </div>
           </div>
@@ -510,47 +535,75 @@ export default function Home() {
             <Button variant="outline" onClick={() => setBlockDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button 
-              variant="destructive" 
-              onClick={handleBlockNumber}
-              disabled={blockNumberMutation.isPending}
-            >
+            <Button onClick={handleBlockNumber} disabled={blockNumberMutation.isPending} variant="destructive">
               {blockNumberMutation.isPending ? "Bloqueando..." : "Bloquear"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
       
-      {/* Add Number Dialog */}
+      {/* AlertDialog: Desbloquear */}
+      <AlertDialog open={unblockDialogOpen} onOpenChange={setUnblockDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desbloquear número?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Este número voltará a ficar disponível imediatamente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleUnblockNumber}>
+              Desbloquear
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      {/* AlertDialog: Excluir */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir número?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. O número será removido permanentemente do sistema.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteNumber} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      {/* Dialog: Adicionar Número */}
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-        <DialogContent className="bg-card text-card-foreground">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>Adicionar Novo Número</DialogTitle>
+            <DialogTitle>Adicionar novo número</DialogTitle>
             <DialogDescription>
-              Adicione um novo número de WhatsApp ao sistema de rotação.
+              Insira as informações do número de WhatsApp
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4">
             <div>
-              <Label htmlFor="newPhoneNumber">Número de Telefone *</Label>
+              <Label htmlFor="newPhoneNumber">Número de telefone *</Label>
               <Input
                 id="newPhoneNumber"
-                type="text"
                 value={newPhoneNumber}
                 onChange={(e) => setNewPhoneNumber(e.target.value)}
-                placeholder="Ex: +55 11 98765-4321"
-                className="mt-2"
+                placeholder="+55 11 91234-5678"
               />
             </div>
             <div>
-              <Label htmlFor="newDisplayName">Nome de Exibição (opcional)</Label>
+              <Label htmlFor="newDisplayName">Nome de exibição (opcional)</Label>
               <Input
                 id="newDisplayName"
-                type="text"
                 value={newDisplayName}
                 onChange={(e) => setNewDisplayName(e.target.value)}
-                placeholder="Ex: João Silva"
-                className="mt-2"
+                placeholder="Ex: Número João"
               />
             </div>
           </div>
@@ -558,68 +611,12 @@ export default function Home() {
             <Button variant="outline" onClick={() => setAddDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button 
-              variant="default" 
-              onClick={handleAddNumber}
-              disabled={addNumberMutation.isPending || !newPhoneNumber.trim()}
-            >
+            <Button onClick={handleAddNumber} disabled={addNumberMutation.isPending}>
               {addNumberMutation.isPending ? "Adicionando..." : "Adicionar"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
-      {/* Unblock Confirmation Dialog */}
-      <AlertDialog open={unblockDialogOpen} onOpenChange={setUnblockDialogOpen}>
-        <AlertDialogContent className="bg-card text-card-foreground border-border">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-green-500" />
-              Desbloquear Número
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground">
-              Deseja realmente desbloquear este número? Ele ficará disponível imediatamente para uso.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="bg-secondary text-secondary-foreground hover:bg-secondary/80">
-              Cancelar
-            </AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={confirmUnblock}
-              className="bg-green-600 text-white hover:bg-green-700"
-            >
-              Desbloquear
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="bg-card text-card-foreground border-border">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-red-500" />
-              Excluir Número
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground">
-              Deseja realmente excluir este número? Esta ação não pode ser desfeita. O histórico de uso será preservado.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="bg-secondary text-secondary-foreground hover:bg-secondary/80">
-              Cancelar
-            </AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={confirmDelete}
-              className="bg-red-600 text-white hover:bg-red-700"
-            >
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

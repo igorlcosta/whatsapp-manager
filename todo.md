@@ -80,3 +80,11 @@
 - [x] Criar função getStatus reutilizável para cálculo de status
 - [x] Adicionar tie-breaker no sort da sugestão (menos usado + id)
 - [x] Adicionar campo de contagem de uso total no banco
+
+## Redesign UI/UX (Padrão SaaS Moderno)
+- [x] Transformar Sugestão Inteligente em hero section com destaque máximo
+- [x] Redesenhar cards com status visual (ícone + cor + glow sutil)
+- [x] Simplificar cards: menos texto, 1 botão principal por estado
+- [x] Refinar tipografia: número em destaque, auxiliares com menor opacidade
+- [x] Adicionar microinterações (hover, loading, transições suaves)
+- [x] Melhorar hierarquia de botões (principal destacado, secundários discretos)
