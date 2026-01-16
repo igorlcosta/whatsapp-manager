@@ -147,3 +147,6 @@
 - [x] Atualizar a cada segundo de forma segura e otimizada
 - [x] Calcular tempo restante em tempo real baseado em lastUsedAt
 - [x] Aplicar formato com segundos: XXh XXm XXs
+
+## Bug: Página de Histórico
+- [x] Corrigir erro 404 na rota /historico

@@ -1,0 +1,25 @@
+{
+  "query": "SELECT id, phone_number, last_used_at FROM whatsapp_numbers;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4KpDg4nVExAAtL6.root --database 5aFStqM8DmY3MC9ps9sYd9 --execute SELECT id, phone_number, last_used_at FROM whatsapp_numbers;",
+  "rows": [
+    {
+      "id": "42",
+      "phone_number": "2299938847",
+      "last_used_at": "2026-01-15 03:52:57"
+    },
+    {
+      "id": "43",
+      "phone_number": "+55 16 98231-0145",
+      "last_used_at": "2026-01-16 02:33:36"
+    },
+    {
+      "id": "52",
+      "phone_number": "5519999287732",
+      "last_used_at": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tphone_number\tlast_used_at\n42\t2299938847\t2026-01-15 03:52:57\n43\t+55 16 98231-0145\t2026-01-16 02:33:36\n52\t5519999287732\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

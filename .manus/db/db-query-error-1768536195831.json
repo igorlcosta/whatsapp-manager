@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE whatsapp_numbers \nSET last_used_at = DATE_SUB(NOW(), INTERVAL 23 HOUR 59 MINUTE)\nWHERE phone_number LIKE '%16%98231%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4KpDg4nVExAAtL6.root --database 5aFStqM8DmY3MC9ps9sYd9 --execute UPDATE whatsapp_numbers \nSET last_used_at = DATE_SUB(NOW(), INTERVAL 23 HOUR 59 MINUTE)\nWHERE phone_number LIKE '%16%98231%';",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1064 (42000) at line 1: You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 2 column 55 near \"59 MINUTE)",
+    "WHERE phone_number LIKE '%16%98231%'\""
+  ]
+}
