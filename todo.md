@@ -50,3 +50,12 @@
 - [x] Modificar sugestão inteligente para mostrar 2 números ao invés de 1
 - [x] Atualizar frontend para exibir ambos os números sugeridos
 - [x] Atualizar testes para validar nova funcionalidade
+
+## Novas Funcionalidades de Gerenciamento
+- [x] Adicionar endpoint para desbloquear número
+- [x] Adicionar endpoint para excluir número
+- [x] Adicionar endpoint para adicionar novo número
+- [x] Criar interface com botão "Desbloquear" em números bloqueados
+- [x] Criar interface com botão "Excluir" em cada número
+- [x] Criar formulário para adicionar novo número
+- [x] Atualizar testes

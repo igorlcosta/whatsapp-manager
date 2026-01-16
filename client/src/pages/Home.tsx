@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertCircle, CheckCircle2, Clock, Phone, Sparkles, AlertTriangle } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock, Phone, Sparkles, AlertTriangle, Trash2, Plus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Link } from "wouter";
@@ -56,13 +56,49 @@ export default function Home() {
     },
   });
   
+  const unblockNumberMutation = trpc.whatsapp.unblockNumber.useMutation({
+    onSuccess: () => {
+      toast.success("Número desbloqueado com sucesso!");
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`Erro: ${error.message}`);
+    },
+  });
+  
+  const deleteNumberMutation = trpc.whatsapp.deleteNumber.useMutation({
+    onSuccess: () => {
+      toast.success("Número excluído com sucesso!");
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`Erro: ${error.message}`);
+    },
+  });
+  
+  const addNumberMutation = trpc.whatsapp.addNumber.useMutation({
+    onSuccess: () => {
+      toast.success("Número adicionado com sucesso!");
+      refetch();
+      setAddDialogOpen(false);
+      setNewPhoneNumber("");
+      setNewDisplayName("");
+    },
+    onError: (error) => {
+      toast.error(`Erro: ${error.message}`);
+    },
+  });
+  
   const [selectedNumber, setSelectedNumber] = useState<number | null>(null);
   const [useDialogOpen, setUseDialogOpen] = useState(false);
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [contactCount, setContactCount] = useState(45);
   const [notes, setNotes] = useState("");
   const [blockHours, setBlockHours] = useState(48);
   const [blockNotes, setBlockNotes] = useState("");
+  const [newPhoneNumber, setNewPhoneNumber] = useState("");
+  const [newDisplayName, setNewDisplayName] = useState("");
   
   const handleUseNumber = () => {
     if (selectedNumber) {
@@ -80,6 +116,27 @@ export default function Home() {
         id: selectedNumber,
         hours: blockHours,
         notes: blockNotes || undefined,
+      });
+    }
+  };
+  
+  const handleUnblock = (id: number) => {
+    if (confirm("Deseja realmente desbloquear este número?")) {
+      unblockNumberMutation.mutate({ id });
+    }
+  };
+  
+  const handleDelete = (id: number) => {
+    if (confirm("Deseja realmente excluir este número? Esta ação não pode ser desfeita.")) {
+      deleteNumberMutation.mutate({ id });
+    }
+  };
+  
+  const handleAddNumber = () => {
+    if (newPhoneNumber.trim()) {
+      addNumberMutation.mutate({
+        phoneNumber: newPhoneNumber.trim(),
+        displayName: newDisplayName.trim() || undefined,
       });
     }
   };
@@ -112,12 +169,18 @@ export default function Home() {
               </h1>
               <p className="text-muted-foreground mt-1">Gerenciamento inteligente de números</p>
             </div>
-            <Link href="/history">
-              <Button variant="outline">
-                <Clock className="w-4 h-4 mr-2" />
-                Histórico
+            <div className="flex gap-2">
+              <Button variant="default" onClick={() => setAddDialogOpen(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Número
               </Button>
-            </Link>
+              <Link href="/history">
+                <Button variant="outline">
+                  <Clock className="w-4 h-4 mr-2" />
+                  Histórico
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </header>
@@ -282,28 +345,59 @@ export default function Home() {
                   )}
                   
                   <div className="flex gap-2 pt-2">
-                    <Button 
-                      size="sm" 
-                      variant="default"
-                      className="flex-1"
-                      disabled={number.calculatedStatus !== "available"}
-                      onClick={() => {
-                        setSelectedNumber(number.id);
-                        setUseDialogOpen(true);
-                      }}
-                    >
-                      Usar
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant="destructive"
-                      onClick={() => {
-                        setSelectedNumber(number.id);
-                        setBlockDialogOpen(true);
-                      }}
-                    >
-                      Bloquear
-                    </Button>
+                    {number.calculatedStatus === "available" && (
+                      <Button 
+                        size="sm" 
+                        variant="default"
+                        className="flex-1"
+                        onClick={() => {
+                          setSelectedNumber(number.id);
+                          setUseDialogOpen(true);
+                        }}
+                      >
+                        Usar
+                      </Button>
+                    )}
+                    
+                    {number.calculatedStatus === "blocked" ? (
+                      <>
+                        <Button 
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => handleUnblock(number.id)}
+                        >
+                          Desbloquear
+                        </Button>
+                        <Button 
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDelete(number.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button 
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => {
+                            setSelectedNumber(number.id);
+                            setBlockDialogOpen(true);
+                          }}
+                        >
+                          Bloquear
+                        </Button>
+                        <Button 
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDelete(number.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -395,6 +489,54 @@ export default function Home() {
               disabled={blockNumberMutation.isPending}
             >
               {blockNumberMutation.isPending ? "Bloqueando..." : "Bloquear"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Add Number Dialog */}
+      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+        <DialogContent className="bg-card text-card-foreground">
+          <DialogHeader>
+            <DialogTitle>Adicionar Novo Número</DialogTitle>
+            <DialogDescription>
+              Adicione um novo número de WhatsApp ao sistema de rotação.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="newPhoneNumber">Número de Telefone *</Label>
+              <Input
+                id="newPhoneNumber"
+                type="text"
+                value={newPhoneNumber}
+                onChange={(e) => setNewPhoneNumber(e.target.value)}
+                placeholder="Ex: +55 11 98765-4321"
+                className="mt-2"
+              />
+            </div>
+            <div>
+              <Label htmlFor="newDisplayName">Nome de Exibição (opcional)</Label>
+              <Input
+                id="newDisplayName"
+                type="text"
+                value={newDisplayName}
+                onChange={(e) => setNewDisplayName(e.target.value)}
+                placeholder="Ex: João Silva"
+                className="mt-2"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              variant="default" 
+              onClick={handleAddNumber}
+              disabled={addNumberMutation.isPending || !newPhoneNumber.trim()}
+            >
+              {addNumberMutation.isPending ? "Adicionando..." : "Adicionar"}
             </Button>
           </DialogFooter>
         </DialogContent>

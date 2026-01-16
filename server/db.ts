@@ -150,3 +150,45 @@ export async function getUsageHistory(limit = 100) {
   const { desc } = await import("drizzle-orm");
   return db.select().from(usageHistory).orderBy(desc(usageHistory.usedAt)).limit(limit);
 }
+
+export async function unblockWhatsappNumber(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { whatsappNumbers } = await import("../drizzle/schema");
+  await db
+    .update(whatsappNumbers)
+    .set({
+      blockedUntil: null,
+      isSensitive: 0,
+      updatedAt: new Date(),
+    })
+    .where(eq(whatsappNumbers.id, id));
+}
+
+export async function deleteWhatsappNumber(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { whatsappNumbers, usageHistory } = await import("../drizzle/schema");
+  
+  // Primeiro deleta o histórico relacionado
+  await db.delete(usageHistory).where(eq(usageHistory.numberId, id));
+  
+  // Depois deleta o número
+  await db.delete(whatsappNumbers).where(eq(whatsappNumbers.id, id));
+}
+
+export async function addWhatsappNumber(phoneNumber: string, displayName?: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { whatsappNumbers } = await import("../drizzle/schema");
+  const result = await db.insert(whatsappNumbers).values({
+    phoneNumber,
+    displayName: displayName || null,
+    status: "available",
+  });
+  
+  return result;
+}

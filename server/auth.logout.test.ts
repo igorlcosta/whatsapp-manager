@@ -59,4 +59,54 @@ describe("auth.logout", () => {
       path: "/",
     });
   });
+  
+  it("should unblock a blocked number", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const numbers = await caller.whatsapp.listNumbers();
+    const blockedNumber = numbers.find(n => n.calculatedStatus === "blocked");
+    
+    if (blockedNumber) {
+      const result = await caller.whatsapp.unblockNumber({ id: blockedNumber.id });
+      expect(result).toEqual({ success: true });
+      
+      const updatedNumbers = await caller.whatsapp.listNumbers();
+      const unblocked = updatedNumbers.find(n => n.id === blockedNumber.id);
+      expect(unblocked?.calculatedStatus).not.toBe("blocked");
+    }
+  });
+  
+  it("should add a new number", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const newPhone = `+55 11 ${Math.floor(90000000 + Math.random() * 10000000)}`;
+    
+    const result = await caller.whatsapp.addNumber({
+      phoneNumber: newPhone,
+      displayName: "Teste Novo",
+    });
+    
+    expect(result).toEqual({ success: true });
+    
+    const numbers = await caller.whatsapp.listNumbers();
+    const added = numbers.find(n => n.phoneNumber === newPhone);
+    expect(added).toBeDefined();
+    expect(added?.displayName).toBe("Teste Novo");
+  });
+  
+  it("should delete a number", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const numbers = await caller.whatsapp.listNumbers();
+    const testNumber = numbers.find(n => n.displayName === "Teste Novo");
+    
+    if (testNumber) {
+      const result = await caller.whatsapp.deleteNumber({ id: testNumber.id });
+      expect(result).toEqual({ success: true });
+      
+      const updatedNumbers = await caller.whatsapp.listNumbers();
+      const deleted = updatedNumbers.find(n => n.id === testNumber.id);
+      expect(deleted).toBeUndefined();
+    }
+  });
 });

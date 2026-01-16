@@ -118,32 +118,63 @@ export const appRouter = router({
     blockNumber: publicProcedure
       .input(z.object({
         id: z.number(),
-        hours: z.number().default(48),
+        hours: z.number().min(1).max(168), // Máximo 7 dias
         notes: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
-        const { getWhatsappNumberById, updateWhatsappNumber, insertUsageHistory } = await import("./db");
-        
+        const { updateWhatsappNumber, insertUsageHistory, getWhatsappNumberById } = await import("./db");
         const number = await getWhatsappNumberById(input.id);
         if (!number) throw new Error("Número não encontrado");
         
         const blockedUntil = new Date(Date.now() + input.hours * 60 * 60 * 1000);
         
         await updateWhatsappNumber(input.id, {
-          status: "blocked",
           blockedUntil,
           isSensitive: 1,
         });
         
-        // Registra no histórico
         await insertUsageHistory({
-          numberId: number.id,
+          numberId: input.id,
           phoneNumber: number.phoneNumber,
           contactCount: 0,
           notes: input.notes || `Bloqueado manualmente por ${input.hours}h`,
           wasBlocked: 1,
         });
         
+        return { success: true };
+      }),
+    
+    // Desbloqueia um número
+    unblockNumber: publicProcedure
+      .input(z.object({
+        id: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        const { unblockWhatsappNumber } = await import("./db");
+        await unblockWhatsappNumber(input.id);
+        return { success: true };
+      }),
+    
+    // Exclui um número
+    deleteNumber: publicProcedure
+      .input(z.object({
+        id: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        const { deleteWhatsappNumber } = await import("./db");
+        await deleteWhatsappNumber(input.id);
+        return { success: true };
+      }),
+    
+    // Adiciona um novo número
+    addNumber: publicProcedure
+      .input(z.object({
+        phoneNumber: z.string().min(10),
+        displayName: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { addWhatsappNumber } = await import("./db");
+        await addWhatsappNumber(input.phoneNumber, input.displayName);
         return { success: true };
       }),
     
