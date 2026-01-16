@@ -142,7 +142,7 @@ export default function Home() {
   const [notes, setNotes] = useState("");
   const [blockHours, setBlockHours] = useState(48);
   const [blockNotes, setBlockNotes] = useState("");
-  const [newPhoneNumber, setNewPhoneNumber] = useState("+55 ");
+  const [newPhoneNumber, setNewPhoneNumber] = useState("");
   const [newDisplayName, setNewDisplayName] = useState("");
   const [phoneError, setPhoneError] = useState("");
   
@@ -720,6 +720,7 @@ export default function Home() {
                         <Ban className="w-4 h-4" />
                       </Button>
                     )}
+
                   </div>
                 </CardContent>
               </Card>

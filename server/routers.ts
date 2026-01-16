@@ -253,6 +253,29 @@ export const appRouter = router({
         await clearAllHistory();
         return { success: true };
       }),
+    
+    // Endpoint temporário para testes: ajusta lastUsedAt para 23h59min atrás
+    setTestCooldown: publicProcedure
+      .input(z.object({
+        id: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        const { getDb } = await import("./db");
+        const { whatsappNumbers } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        
+        // Define lastUsedAt para 23h59min atrás (faltando 1 minuto para liberar)
+        const testTime = new Date(Date.now() - (23 * 60 + 59) * 60 * 1000);
+        
+        await db.update(whatsappNumbers)
+          .set({ lastUsedAt: testTime })
+          .where(eq(whatsappNumbers.id, input.id));
+        
+        return { success: true, testTime };
+      }),
   }),
 });
 
