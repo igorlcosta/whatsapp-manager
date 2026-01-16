@@ -72,8 +72,11 @@ describe("WhatsApp Number Management", () => {
       const updatedNumbers = await caller.whatsapp.listNumbers();
       const usedNumber = updatedNumbers.find(n => n.id === availableNumber.id);
       
-      expect(usedNumber?.calculatedStatus).toBe("waiting");
-      expect(usedNumber?.lastContactCount).toBe(45);
+      expect(usedNumber).toBeDefined();
+      if (usedNumber) {
+        expect(usedNumber.calculatedStatus).toBe("waiting");
+        expect(usedNumber.lastContactCount).toBe(45);
+      }
     }
   });
   

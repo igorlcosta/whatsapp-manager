@@ -91,7 +91,7 @@ export default function Home() {
       refetch();
       utils.whatsapp.getSuggestion.invalidate(); // Invalida sugestão
       setAddDialogOpen(false);
-      setNewPhoneNumber("");
+      setNewPhoneNumber("+55 ");
       setNewDisplayName("");
       setPhoneError("");
     },
@@ -110,7 +110,7 @@ export default function Home() {
   const [notes, setNotes] = useState("");
   const [blockHours, setBlockHours] = useState(48);
   const [blockNotes, setBlockNotes] = useState("");
-  const [newPhoneNumber, setNewPhoneNumber] = useState("");
+  const [newPhoneNumber, setNewPhoneNumber] = useState("+55 ");
   const [newDisplayName, setNewDisplayName] = useState("");
   const [phoneError, setPhoneError] = useState("");
   
@@ -164,9 +164,68 @@ export default function Home() {
     return "";
   };
   
+  const formatPhoneNumber = (value: string): string => {
+    // Remove tudo exceto dígitos
+    const digits = value.replace(/\D/g, '');
+    
+    // Se estiver vazio, retorna +55
+    if (digits.length === 0) {
+      return '+55 ';
+    }
+    
+    // Remove o 55 se já estiver presente (para não duplicar)
+    const withoutCountryCode = digits.startsWith('55') ? digits.slice(2) : digits;
+    
+    // Formata: +55 (XX) XXXXX-XXXX ou +55 (XX) XXXX-XXXX
+    let formatted = '+55 ';
+    
+    if (withoutCountryCode.length > 0) {
+      formatted += '(';
+      formatted += withoutCountryCode.slice(0, 2); // DDD
+      
+      if (withoutCountryCode.length > 2) {
+        formatted += ') ';
+        
+        if (withoutCountryCode.length <= 6) {
+          // Primeiros 4 dígitos
+          formatted += withoutCountryCode.slice(2);
+        } else {
+          // Formato completo com hífen
+          const isNineDigits = withoutCountryCode.length >= 10;
+          if (isNineDigits) {
+            // 9XXXX-XXXX
+            formatted += withoutCountryCode.slice(2, 7);
+            if (withoutCountryCode.length > 7) {
+              formatted += '-' + withoutCountryCode.slice(7, 11);
+            }
+          } else {
+            // XXXX-XXXX
+            formatted += withoutCountryCode.slice(2, 6);
+            if (withoutCountryCode.length > 6) {
+              formatted += '-' + withoutCountryCode.slice(6, 10);
+            }
+          }
+        }
+      }
+    }
+    
+    return formatted;
+  };
+  
   const handlePhoneChange = (value: string) => {
-    setNewPhoneNumber(value);
-    const error = validatePhoneNumber(value);
+    // Se o usuário apagar tudo, mantém +55
+    if (value.length === 0 || value === '+') {
+      setNewPhoneNumber('+55 ');
+      setPhoneError('');
+      return;
+    }
+    
+    // Aplica formatação
+    const formatted = formatPhoneNumber(value);
+    setNewPhoneNumber(formatted);
+    
+    // Valida
+    const error = validatePhoneNumber(formatted);
     setPhoneError(error);
   };
   
@@ -270,7 +329,7 @@ export default function Home() {
           setAddDialogOpen(open);
           if (!open) {
             setPhoneError("");
-            setNewPhoneNumber("");
+            setNewPhoneNumber("+55 ");
             setNewDisplayName("");
           }
         }}>

@@ -105,3 +105,9 @@
 - [x] Adicionar invalidação automática da query getSuggestion após useNumber
 - [x] Adicionar invalidação após blockNumber e unblockNumber
 - [x] Testar atualização em tempo real
+
+## Formatação de Telefone
+- [x] Adicionar máscara automática no campo de telefone
+- [x] Iniciar automaticamente com +55
+- [x] Formatar enquanto digita: +55 (XX) XXXXX-XXXX
+- [x] Permitir apenas dígitos após o +55
