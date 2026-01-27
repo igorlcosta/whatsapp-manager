@@ -185,10 +185,16 @@ export async function addWhatsappNumber(phoneNumber: string, displayName?: strin
   if (!db) throw new Error("Database not available");
   
   const { whatsappNumbers } = await import("../drizzle/schema");
+  
+  // Número novo entra em cooldown automático de 24h
+  // Isso protege números de WhatsApp recém-criados
+  const now = new Date();
+  
   const result = await db.insert(whatsappNumbers).values({
     phoneNumber,
     displayName: displayName || null,
-    status: "available",
+    status: "cooldown",
+    lastUsedAt: now, // Define como "usado agora" para iniciar cooldown de 24h
   });
   
   return result;
